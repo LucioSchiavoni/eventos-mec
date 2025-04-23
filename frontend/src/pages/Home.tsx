@@ -343,8 +343,6 @@ export default function Calendar() {
   const myCalendars = [
     { name: "Mi Calendario", color: "bg-blue-500" },
     { name: "Trabajo", color: "bg-green-500" },
-    { name: "Personal", color: "bg-purple-500" },
-    { name: "Familia", color: "bg-orange-500" },
   ]
 
   const togglePlay = () => {
@@ -715,7 +713,7 @@ export default function Calendar() {
             </div>
           </div>
         </div>
-        
+
         {showAIPopup && (
           <div className="fixed bottom-8 right-8 z-20">
             <div className="w-[450px] relative bg-gradient-to-br from-blue-400/30 via-blue-500/30 to-blue-600/30 backdrop-blur-lg p-6 rounded-2xl shadow-xl border border-blue-300/30 text-white">

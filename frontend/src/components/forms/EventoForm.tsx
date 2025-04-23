@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 
 import { useState } from "react"
@@ -40,29 +38,16 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
   const [showTimePicker, setShowTimePicker] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Mutación para crear un evento
+
   const createEventMutation = useMutation({
     mutationFn: async (eventData: EventFormData) => {
-      // Aquí deberías hacer la llamada a tu API
-      // Por ejemplo:
-      // const response = await fetch('tu-url-api/eventos', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(eventData),
-      // });
-      // return response.json();
-
-      // Simulamos una respuesta exitosa
+            //fetch a la api
       await new Promise((resolve) => setTimeout(resolve, 500))
       return { ...eventData, id: Date.now(), created_at: new Date().toISOString() }
     },
     onSuccess: () => {
-      // Invalidar la consulta para refrescar los datos
       queryClient.invalidateQueries({ queryKey: ["events"] })
       onClose()
-      // Resetear el formulario
       setFormData({
         email: "",
         fecha: format(new Date(), "yyyy-MM-dd"),
@@ -86,7 +71,6 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
       setFormData((prev) => ({ ...prev, [name]: value }))
     }
 
-    // Limpiar error cuando el usuario comienza a escribir
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }))
     }
