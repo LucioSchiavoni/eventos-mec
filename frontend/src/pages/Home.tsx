@@ -38,8 +38,8 @@ import {
 } from "date-fns"
 import { es } from "date-fns/locale"
 import EventForm from "../components/forms/EventoForm"
+import { getEventos } from "../api/eventos"
 
-// Tipo para los eventos que vienen del backend
 interface EventData {
   id: number
   email: string
@@ -53,7 +53,6 @@ interface EventData {
   created_at: string
 }
 
-// Tipo para los eventos formateados para el calendario
 interface CalendarEvent {
   id: number
   title: string
@@ -101,58 +100,14 @@ export default function Calendar() {
   // Consulta para obtener los eventos del backend
   const { data: eventsData, isLoading } = useQuery({
     queryKey: ["events"],
-    queryFn: async () => {
-      try {
-        // Aquí deberías hacer la llamada a tu API
-        // Por ejemplo:
-        // const response = await fetch('tu-url-api/eventos');
-        // const data = await response.json();
-        // return data;
-
-        // Por ahora, simularemos algunos datos
-        const mockData: EventData[] = [
-          {
-            id: 1,
-            email: "correo@gmail.com",
-            fecha: "2025-04-22T16:30:00.000Z",
-            hora: "10:30",
-            lugar: "Sala de conferencias A",
-            soporte: true,
-            organizador: "Juan Pérez",
-            descripcion: "Reunión de planificación trimestral",
-            codigo: "1234safd",
-            created_at: "2025-04-22T16:34:45.424Z",
-          },
-          {
-            id: 2,
-            email: "otro@gmail.com",
-            fecha: "2025-04-23T14:00:00.000Z",
-            hora: "14:00",
-            lugar: "Sala de juntas",
-            soporte: false,
-            organizador: "María López",
-            descripcion: "Revisión de presupuesto",
-            codigo: "5678abcd",
-            created_at: "2025-04-22T16:35:45.424Z",
-          },
-          // Más datos de ejemplo...
-        ]
-
-        // Simular un retraso de red
-        await new Promise((resolve) => setTimeout(resolve, 500))
-        return mockData
-      } catch (error) {
-        console.error("Error al obtener eventos:", error)
-        return [] // Devolver un array vacío en caso de error
-      }
-    },
+    queryFn: getEventos,
   })
 
   // Convertir los datos del backend al formato que espera nuestro calendario
   const events = useMemo(() => {
     if (!eventsData) return []
 
-    return eventsData.map((event, index) => {
+    return eventsData.map((event:any, index:number) => {
       try {
         // Validar que la fecha sea válida
         let eventDate
@@ -244,7 +199,7 @@ export default function Calendar() {
 
     const query = searchQuery.toLowerCase()
     return events.filter(
-      (event) =>
+      (event:any) =>
         event.email.toLowerCase().includes(query) ||
         event.location.toLowerCase().includes(query) ||
         event.organizer.toLowerCase().includes(query) ||
@@ -256,18 +211,18 @@ export default function Calendar() {
   // Calcular los eventos visibles según la vista actual y la fecha seleccionada
   const visibleEvents = useMemo(() => {
     if (currentView === "day") {
-      return filteredEvents.filter((event) => isSameDay(event.date, selectedDate))
+      return filteredEvents.filter((event: any) => isSameDay(event.date, selectedDate))
     } else if (currentView === "week") {
       const start = startOfWeek(selectedDate, { weekStartsOn: 0 })
       const end = endOfWeek(selectedDate, { weekStartsOn: 0 })
 
-      return filteredEvents.filter((event) => event.date >= start && event.date <= end)
+      return filteredEvents.filter((event:any) => event.date >= start && event.date <= end)
     } else {
       // month view
       const start = startOfMonth(selectedDate)
       const end = endOfMonth(selectedDate)
 
-      return filteredEvents.filter((event) => event.date >= start && event.date <= end)
+      return filteredEvents.filter((event:any) => event.date >= start && event.date <= end)
     }
   }, [filteredEvents, currentView, selectedDate])
 
@@ -394,6 +349,7 @@ export default function Calendar() {
 
   const togglePlay = () => {
     setIsPlaying(!isPlaying)
+    // Here you would typically also control the actual audio playback
   }
 
   // Formatear el título de la vista actual
@@ -464,9 +420,9 @@ export default function Calendar() {
           style={{ animationDelay: "0.4s" }}
         >
           <div>
-            <button 
+            <button
               className="mb-6 flex items-center justify-center gap-2 rounded-full bg-blue-500 px-4 py-3 text-white w-full"
-              onClick={openEventForm} 
+              onClick={openEventForm}
             >
               <Plus className="h-5 w-5" />
               <span>Crear</span>
@@ -613,7 +569,7 @@ export default function Calendar() {
                       ))}
 
                       {/* Events */}
-                      {visibleEvents.map((event, i) => {
+                      {visibleEvents.map((event:any, i: number) => {
                         const eventStyle = calculateEventStyle(event.startTime, event.endTime)
                         return (
                           <div
@@ -675,8 +631,8 @@ export default function Calendar() {
 
                         {/* Events */}
                         {visibleEvents
-                          .filter((event) => isSameDay(event.date, day))
-                          .map((event, i) => {
+                          .filter((event: any) => isSameDay(event.date, day))
+                          .map((event: any, i:number) => {
                             const eventStyle = calculateEventStyle(event.startTime, event.endTime)
                             return (
                               <div
@@ -730,9 +686,9 @@ export default function Calendar() {
                         </div>
                         <div className="mt-1 space-y-1">
                           {visibleEvents
-                            .filter((event) => isSameDay(event.date, day))
+                            .filter((event: any) => isSameDay(event.date, day))
                             .slice(0, 3)
-                            .map((event, eventIndex) => (
+                            .map((event: any, eventIndex: number) => (
                               <div
                                 key={eventIndex}
                                 className={`${event.color} text-white text-xs p-1 rounded truncate cursor-pointer`}
@@ -744,11 +700,12 @@ export default function Calendar() {
                                 {event.startTime} {event.title}
                               </div>
                             ))}
-                          {visibleEvents.filter((event) => isSameDay(event.date, day)).length > 3 && (
-                            <div className="text-xs text-white/70 pl-1">
-                              +{visibleEvents.filter((event) => isSameDay(event.date, day)).length - 3} más
-                            </div>
-                          )}
+                       {visibleEvents
+                        .filter((event: { date: Date }) => isSameDay(event.date, day)).length > 3 && (
+                        <div className="text-xs text-white/70 pl-1">
+                        +{visibleEvents.filter((event: { date: Date }) => isSameDay(event.date, day)).length - 3} más
+                         </div>
+                    )}
                         </div>
                       </div>
                     ))}
@@ -758,8 +715,7 @@ export default function Calendar() {
             </div>
           </div>
         </div>
-
-        {/* AI Popup */}
+        
         {showAIPopup && (
           <div className="fixed bottom-8 right-8 z-20">
             <div className="w-[450px] relative bg-gradient-to-br from-blue-400/30 via-blue-500/30 to-blue-600/30 backdrop-blur-lg p-6 rounded-2xl shadow-xl border border-blue-300/30 text-white">
@@ -808,8 +764,10 @@ export default function Calendar() {
 
         {/* Event Details Modal */}
         {selectedEvent && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className={`${selectedEvent.color} p-6 rounded-lg shadow-xl max-w-md w-full mx-4`}>
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+            <div
+              className={`${selectedEvent.color} bg-opacity-90 backdrop-filter backdrop-blur-md p-6 rounded-lg shadow-xl max-w-md w-full mx-4`}
+            >
               <h3 className="text-2xl font-bold mb-4 text-white">{selectedEvent.title}</h3>
               <div className="space-y-3 text-white">
                 <p className="flex items-center">
@@ -857,7 +815,7 @@ export default function Calendar() {
           </div>
         )}
 
-
+        {/* Formulario de Evento */}
         <EventForm isOpen={showEventForm} onClose={() => setShowEventForm(false)} initialDate={selectedDate} />
       </main>
     </div>
