@@ -4,9 +4,14 @@ import { createEventoRepositories, eliminarEventoRepositories, getEventosByIdRep
 
 export const createEventoService = async (data) => {
     try {
-        const codigo = '1234safd';
+
+        const existEvento = await getEventosByIdRepositories(data.hora_ini, data.hora_fin);
+        if(existEvento) {
+            return {error: "Ya existe un evento en ese rango de horas"};
+        }
+        const codigo = Mth.random().toString(36).substring(2, 10);
         const newEvento = await createEventoRepositories({
-            ... data ,
+            ... data,
             codigo: codigo
         });
         return {success: "Evento creado con exito", evento: newEvento};

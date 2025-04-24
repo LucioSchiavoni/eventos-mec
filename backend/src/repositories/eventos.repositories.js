@@ -11,6 +11,32 @@ export const getEventosRepositories = async () => {
     }
 }
 
+export const findEventoByHoraRepositories = async (hora_ini, hora_fin) => {
+    try {
+        const evento = await prisma.evento.findMany({
+            where: {
+                OR: [
+                    {
+                        hora_ini: {
+                            gte: hora_ini,
+                            lte: hora_fin
+                        }
+                    },
+                    {
+                        hora_fin: {
+                            gte: hora_ini,
+                            lte: hora_fin
+                        }
+                    }
+                ]
+            }
+        });
+        return evento.length > 0;
+    } catch (error) {
+        throw error;
+    }
+}
+
 export const createEventoRepositories = async (data) => {
     try {
         const newEvento = await prisma.evento.create({
@@ -18,8 +44,9 @@ export const createEventoRepositories = async (data) => {
                 email: data.email,
                 codigo: data.codigo,
                 descripcion: data.descripcion,
-                fecha: data.fecha, 
-                hora: data.hora,
+                fecha: new Date(data.fecha), 
+                hora_ini: data.hora_ini,
+                hora_fin: data.hora_fin,
                 lugar: data.lugar,
                 organizador: data.organizador,
                 soporte: data.soporte

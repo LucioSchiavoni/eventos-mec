@@ -4,8 +4,8 @@ import { createEventoService, deleteEventoService, getEventosByIdService, getEve
 
 export const createEventoController = async (req, res) => {
     try {
-        const { email, descripcion, fecha, hora, lugar, organizador, soporte } = req.body;
-        const newEvento = await createEventoService({ email, descripcion, fecha, hora, lugar, organizador, soporte });
+        const { email, descripcion, fecha, hora_ini, hora_fin, lugar, organizador, soporte } = req.body;
+        const newEvento = await createEventoService({ email, descripcion, fecha, hora_ini, hora_fin, lugar, organizador, soporte });
         return res.status(201).json(newEvento);
     } catch (error) {
         return res.status(500).json({ error: error.message });
@@ -37,8 +37,8 @@ export const getEventosByIdController = async (req, res) => {
 export const modificarEventoController = async (req, res) => {
     try {
         const { id } = req.params;
-        const { email, descripcion, fecha, hora, lugar, organizador, soporte } = req.body;
-        const evento = await modificarEventoService(id, { email, descripcion, fecha, hora, lugar, organizador, soporte });
+        const { email, descripcion, fecha, hora_ini, hora_fin, lugar, organizador, soporte } = req.body;
+        const evento = await modificarEventoService(id, { email, descripcion, fecha, hora_ini,hora_fin , lugar, organizador, soporte });
         return res.status(200).json(evento);
     } catch (error) {
         return res.status(500).json({ error: error.message });

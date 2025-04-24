@@ -11,3 +11,13 @@ export const getEventos = async () => {
         console.log(error);
     }
 }
+
+
+export const createEvento = async (evento: any) => {
+    try {
+        const res = await clienteAxios.post("/evento", evento);
+        return res.data;
+    } catch (error) {
+        console.log(error);
+    }
+}

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { format, parseISO } from "date-fns"
 import { X, CalendarIcon, Clock } from "lucide-react"
+import { createEvento } from "../../api/eventos"
 
 interface EventFormProps {
   isOpen: boolean
@@ -14,9 +15,11 @@ interface EventFormProps {
 interface EventFormData {
   email: string
   fecha: string
-  hora: string
+  hora_ini: string
+  hora_fin: string
   lugar: string
   soporte: boolean
+  telefono: string
   organizador: string
   descripcion: string
   codigo: string
@@ -27,39 +30,41 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
   const [formData, setFormData] = useState<EventFormData>({
     email: "",
     fecha: format(initialDate, "yyyy-MM-dd"),
-    hora: format(new Date().setHours(9, 0, 0, 0), "HH:mm"),
+    hora_ini: format(new Date().setHours(9, 0, 0, 0), "HH:mm"),
+    hora_fin: format(new Date().setHours(10, 0, 0, 0), "HH:mm"),
     lugar: "",
     soporte: false,
+    telefono: "",
     organizador: "",
     descripcion: "",
     codigo: "",
   })
   const [showDatePicker, setShowDatePicker] = useState(false)
-  const [showTimePicker, setShowTimePicker] = useState(false)
+  const [showTimePicker, setShowTimePicker] = useState<"hora_ini" | "hora_fin" | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({})
 
 
   const createEventMutation = useMutation({
     mutationFn: async (eventData: EventFormData) => {
-            //fetch a la api
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      return { ...eventData, id: Date.now(), created_at: new Date().toISOString() }
+      await createEvento(eventData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["events"] })
-      onClose()
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      onClose();
       setFormData({
         email: "",
         fecha: format(new Date(), "yyyy-MM-dd"),
-        hora: format(new Date().setHours(9, 0, 0, 0), "HH:mm"),
+        hora_ini: format(new Date().setHours(9, 0, 0, 0), "HH:mm"),
+        hora_fin: format(new Date().setHours(10, 0, 0, 0), "HH:mm"),
         lugar: "",
         soporte: false,
+        telefono: "",
         organizador: "",
         descripcion: "",
         codigo: "",
-      })
+      });
     },
-  })
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
@@ -83,28 +88,40 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email inválido"
 
     if (!formData.fecha) newErrors.fecha = "La fecha es obligatoria"
-    if (!formData.hora) newErrors.hora = "La hora es obligatoria"
+    if (!formData.hora_ini) newErrors.hora_ini = "La hora de inicio es obligatoria";
+    if (!formData.hora_fin) newErrors.hora_fin = "La hora de finalización es obligatoria";
+    else if (formData.hora_ini && formData.hora_fin && formData.hora_ini >= formData.hora_fin) {
+      newErrors.hora_fin = "La hora de finalización debe ser posterior a la hora de inicio";
+    }
     if (!formData.lugar) newErrors.lugar = "El lugar es obligatorio"
     if (!formData.organizador) newErrors.organizador = "El organizador es obligatorio"
+
+    if (!formData.telefono) {
+    } else if (!/^\d+$/.test(formData.telefono)) {
+      newErrors.telefono = "El teléfono debe contener solo números";
+    }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
-
+  
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-
+    e.preventDefault();
+  
     if (validateForm()) {
-      // Crear una fecha ISO combinando fecha y hora
-      const dateTimeString = `${formData.fecha}T${formData.hora}:00`
+      const dateTimeStart = `${formData.fecha}T${formData.hora_ini}:00`;
+
+  
       const eventData = {
         ...formData,
-        fecha: dateTimeString,
-      }
-
-      createEventMutation.mutate(eventData)
+        fecha: dateTimeStart,
+        hora_fin: formData.hora_fin,
+        hora_ini: formData.hora_ini,
+      };
+      console.log(eventData)
+      createEventMutation.mutate(eventData);
     }
-  }
+  };
 
   // Generar días para el selector de fecha
   const generateCalendarDays = () => {
@@ -168,7 +185,7 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
                 className={`w-full px-3 py-2 bg-white/10 border ${errors.email ? "border-red-500" : "border-white/20"} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 placeholder="correo@ejemplo.com"
               />
-              {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
+              {errors.email && <p className="text-red-700 font-semibold">{errors.email}</p>}
             </div>
 
             {/* Organizador */}
@@ -185,7 +202,7 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
                 className={`w-full px-3 py-2 bg-white/10 border ${errors.organizador ? "border-red-500" : "border-white/20"} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 placeholder="Nombre del organizador"
               />
-              {errors.organizador && <p className="text-red-500 text-xs">{errors.organizador}</p>}
+              {errors.organizador && <p className="text-red-700 font-semibold">{errors.organizador}</p>}
             </div>
 
             {/* Fecha */}
@@ -206,7 +223,7 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
                 />
                 <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/70" />
               </div>
-              {errors.fecha && <p className="text-red-500 text-xs">{errors.fecha}</p>}
+              {errors.fecha && <p className="text-red-700 font-semibold">{errors.fecha}</p>}
 
               {/* Selector de fecha */}
               {showDatePicker && (
@@ -240,48 +257,93 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
             </div>
 
             {/* Hora */}
-            <div className="space-y-2 relative">
-              <label htmlFor="hora" className="block text-sm font-medium">
-                Hora
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  id="hora"
-                  name="hora"
-                  value={formData.hora}
-                  readOnly
-                  onClick={() => setShowTimePicker((prev) => !prev)}
-                  className={`w-full px-3 py-2 bg-white/10 border ${errors.hora ? "border-red-500" : "border-white/20"} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer`}
-                  placeholder="Seleccionar hora"
-                />
-                <Clock className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/70" />
-              </div>
-              {errors.hora && <p className="text-red-500 text-xs">{errors.hora}</p>}
+          {/* Hora de inicio */}
+          <div className="space-y-2 relative">
+  <label htmlFor="hora_ini" className="block text-sm font-medium">
+    Hora de inicio
+  </label>
+  <div className="relative">
+    <input
+      type="text"
+      id="hora_ini"
+      name="hora_ini"
+      value={formData.hora_ini}
+      readOnly
+      onClick={() => setShowTimePicker((prev) => (prev === "hora_ini" ? null : "hora_ini"))}
+      className={`w-full px-3 py-2 bg-white/10 border ${errors.hora_ini ? "border-red-500" : "border-white/20"} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer`}
+      placeholder="Seleccionar hora de inicio"
+    />
+    <Clock className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/70" />
+  </div>
+  {errors.hora_ini && <p className="text-red-700 font-semibold">{errors.hora_ini}</p>}
 
-              {/* Selector de hora */}
-              {showTimePicker && (
-                <div className="absolute z-10 mt-1 bg-gray-800 rounded-md shadow-lg p-3 border border-white/20 w-48 max-h-60 overflow-y-auto">
-                  <div className="space-y-1">
-                    {timeOptions.map((time, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => {
-                          setFormData((prev) => ({ ...prev, hora: time }))
-                          setShowTimePicker(false)
-                        }}
-                        className={`w-full text-left px-3 py-2 text-sm rounded-md
-                          ${formData.hora === time ? "bg-blue-500 text-white" : "hover:bg-white/20"}
-                        `}
-                      >
-                        {time}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+  {/* Selector de hora para hora_ini */}
+  {showTimePicker === "hora_ini" && (
+    <div className="absolute z-10 mt-1 bg-gray-800 rounded-md shadow-lg p-3 border border-white/20 w-48 max-h-60 overflow-y-auto">
+      <div className="space-y-1">
+        {timeOptions.map((time, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => {
+              setFormData((prev) => ({ ...prev, hora_ini: time })); 
+              setShowTimePicker(null);
+            }}
+            className={`w-full text-left px-3 py-2 text-sm rounded-md ${
+              formData.hora_ini === time ? "bg-blue-500 text-white" : "hover:bg-white/20"
+            }`}
+          >
+            {time}
+          </button>
+        ))}
+      </div>
+    </div>
+  )}
+</div>
+
+{/* Hora de finalización */}
+<div className="space-y-2 relative">
+  <label htmlFor="hora_fin" className="block text-sm font-medium">
+    Hora de finalización
+  </label>
+  <div className="relative">
+    <input
+      type="text"
+      id="hora_fin"
+      name="hora_fin"
+      value={formData.hora_fin}
+      readOnly
+      onClick={() => setShowTimePicker((prev) => (prev === "hora_fin" ? null : "hora_fin"))}
+      className={`w-full px-3 py-2 bg-white/10 border ${errors.hora_fin ? "border-red-500" : "border-white/20"} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer`}
+      placeholder="Seleccionar hora de finalización"
+    />
+    <Clock className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/70" />
+  </div>
+  {errors.hora_fin && <p className="text-red-700 font-semibold">{errors.hora_fin}</p>}
+
+  {/* Selector de hora para hora_fin */}
+  {showTimePicker === "hora_fin" && (
+    <div className="absolute z-10 mt-1 bg-gray-800 rounded-md shadow-lg p-3 border border-white/20 w-48 max-h-60 overflow-y-auto">
+      <div className="space-y-1">
+        {timeOptions.map((time, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => {
+              setFormData((prev) => ({ ...prev, hora_fin: time })); 
+              setShowTimePicker(null);
+            }}
+            className={`w-full text-left px-3 py-2 text-sm rounded-md ${
+              formData.hora_fin === time ? "bg-blue-500 text-white" : "hover:bg-white/20"
+            }`}
+          >
+            {time}
+          </button>
+        ))}
+      </div>
+    </div>
+  )}
+</div>
 
             {/* Lugar */}
             <div className="space-y-2">
@@ -297,24 +359,27 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
                 className={`w-full px-3 py-2 bg-white/10 border ${errors.lugar ? "border-red-500" : "border-white/20"} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 placeholder="Ubicación del evento"
               />
-              {errors.lugar && <p className="text-red-500 text-xs">{errors.lugar}</p>}
+              {errors.lugar && <p className="text-red-700 font-semibold">{errors.lugar}</p>}
             </div>
 
-            {/* Código */}
+
+            {/* Teléfono */}
             <div className="space-y-2">
-              <label htmlFor="codigo" className="block text-sm font-medium">
-                Código
+              <label htmlFor="lugar" className="block text-sm font-medium">
+                Telefono
               </label>
               <input
                 type="text"
-                id="codigo"
-                name="codigo"
-                value={formData.codigo}
+                id="telefono"
+                name="telefono"
+                value={formData.telefono}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Código del evento (opcional)"
+                className={`w-full px-3 py-2 bg-white/10 border ${errors.telefono ? "border-red-500" : "border-white/20"} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                placeholder="Numero de contacto"
               />
+              {errors.lugar && <p className="text-red-700 font-semibold">{errors.telefono}</p>}
             </div>
+
           </div>
 
           {/* Descripción */}

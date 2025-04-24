@@ -1,21 +1,10 @@
-"use client"
-
 import { useState, useEffect, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import {
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Search,
-  Settings,
-  Menu,
   Clock,
   MapPin,
   Users,
   CalendarIcon,
-  Pause,
-  Sparkles,
-  X,
 } from "lucide-react"
 import {
   format,
@@ -39,19 +28,22 @@ import {
 import { es } from "date-fns/locale"
 import EventForm from "../components/forms/EventoForm"
 import { getEventos } from "../api/eventos"
+import CalendarControls from "../components/utils/CalendarControls"
+import Sidebar from "../components/utils/Sidebar"
+import Header from "../components/utils/Headers"
 
-interface EventData {
-  id: number
-  email: string
-  fecha: string
-  hora: string
-  lugar: string
-  soporte: boolean
-  organizador: string
-  descripcion: string
-  codigo: string
-  created_at: string
-}
+// interface EventData {
+//   id: number
+//   email: string
+//   fecha: string
+//   hora: string
+//   lugar: string
+//   soporte: boolean
+//   organizador: string
+//   descripcion: string
+//   codigo: string
+//   created_at: string
+// }
 
 interface CalendarEvent {
   id: number
@@ -85,14 +77,14 @@ const eventColors = [
 
 export default function Calendar() {
   const [isLoaded, setIsLoaded] = useState(false)
-  const [showAIPopup, setShowAIPopup] = useState(false)
-  const [typedText, setTypedText] = useState("")
-  const [isPlaying, setIsPlaying] = useState(false)
+  const [__, setShowAIPopup] = useState(false)
+  // const [typedText, setTypedText] = useState("")
+  // const [isPlaying, setIsPlaying] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [showEventForm, setShowEventForm] = useState(false)
 
   // Estado para la navegación del calendario
-  const [currentDate, setCurrentDate] = useState(new Date())
+  const [_, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [currentView, setCurrentView] = useState<"day" | "week" | "month">("week")
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
@@ -103,66 +95,67 @@ export default function Calendar() {
     queryFn: getEventos,
   })
 
-  // Convertir los datos del backend al formato que espera nuestro calendario
   const events = useMemo(() => {
-    if (!eventsData) return []
-
-    return eventsData.map((event:any, index:number) => {
+    if (!eventsData) return [];
+  
+    return eventsData.map((event: any, index: number) => {
       try {
-        // Validar que la fecha sea válida
-        let eventDate
+        let eventDate;
         try {
-          eventDate = parseISO(event.fecha)
-          // Verificar si la fecha es válida
+          eventDate = parseISO(event.fecha);
           if (isNaN(eventDate.getTime())) {
-            console.error(`Fecha inválida para el evento ${event.id}:`, event.fecha)
-            // Usar la fecha actual como fallback
-            eventDate = new Date()
+            console.error(`Fecha inválida para el evento ${event.id}:`, event.fecha);
+            eventDate = new Date(); 
           }
         } catch (error) {
-          console.error(`Error al parsear la fecha del evento ${event.id}:`, error)
-          // Usar la fecha actual como fallback
-          eventDate = new Date()
+          console.error(`Error al parsear la fecha del evento ${event.id}:`, error);
+          eventDate = new Date(); 
         }
-
-        // Parsear la hora con manejo de errores
-        let hours = 0,
-          minutes = 0
+  
+        let startHours = 0,
+          startMinutes = 0,
+          endHours = 0,
+          endMinutes = 0;
         try {
-          const timeParts = event.hora.split(":")
-          hours = Number.parseInt(timeParts[0], 10) || 0
-          minutes = Number.parseInt(timeParts[1], 10) || 0
+          if (event.hora_ini) {
+            const [startHourPart, startMinutePart] = event.hora_ini.split(":").map(Number);
+            startHours = startHourPart || 0;
+            startMinutes = startMinutePart || 0;
+          }
+          if (event.hora_fin) {
+            const [endHourPart, endMinutePart] = event.hora_fin.split(":").map(Number);
+            endHours = endHourPart || 0;
+            endMinutes = endMinutePart || 0;
+          }
         } catch (error) {
-          console.error(`Error al parsear la hora del evento ${event.id}:`, error)
+          console.error(`Error al parsear las horas del evento ${event.id}:`, error);
         }
-
-        // Crear una fecha con la hora correcta
-        const startDateTime = new Date(eventDate)
-        startDateTime.setHours(hours)
-        startDateTime.setMinutes(minutes)
-
-        // Calcular la hora de finalización (asumimos eventos de 1 hora)
-        const endDateTime = new Date(startDateTime)
-        endDateTime.setHours(endDateTime.getHours() + 1)
-
-        // Formatear las horas con manejo de errores
-        let startTimeFormatted, endTimeFormatted
+        const startDateTime = new Date(eventDate);
+        startDateTime.setHours(startHours);
+        startDateTime.setMinutes(startMinutes);
+  
+        const endDateTime = new Date(eventDate);
+        endDateTime.setHours(endHours);
+        endDateTime.setMinutes(endMinutes);
+  
+       
+        let startTimeFormatted, endTimeFormatted;
         try {
-          startTimeFormatted = format(startDateTime, "HH:mm")
-          endTimeFormatted = format(endDateTime, "HH:mm")
+          startTimeFormatted = format(startDateTime, "HH:mm");
+          endTimeFormatted = format(endDateTime, "HH:mm");
         } catch (error) {
-          console.error(`Error al formatear las horas del evento ${event.id}:`, error)
-          startTimeFormatted = "00:00"
-          endTimeFormatted = "01:00"
+          console.error(`Error al formatear las horas del evento ${event.id}:`, error);
+          startTimeFormatted = "00:00";
+          endTimeFormatted = "01:00";
         }
-
+  
         return {
           id: event.id,
           title: `Reunión: ${event.organizador || "Sin organizador"}`,
           startTime: startTimeFormatted,
           endTime: endTimeFormatted,
           color: eventColors[index % eventColors.length],
-          day: getDay(eventDate), // 0 = domingo, 1 = lunes, etc.
+          day: getDay(eventDate),
           description: event.descripcion || "Sin descripción",
           location: event.lugar || "Sin ubicación",
           attendees: [event.email || "Sin email"],
@@ -170,10 +163,9 @@ export default function Calendar() {
           email: event.email || "Sin email",
           codigo: event.codigo || "Sin código",
           date: eventDate,
-        }
+        };
       } catch (error) {
-        console.error(`Error al procesar el evento ${event.id}:`, error)
-        // Devolver un evento con valores predeterminados en caso de error
+        console.error(`Error al procesar el evento ${event.id}:`, error);
         return {
           id: event.id || 0,
           title: "Evento con error",
@@ -188,12 +180,12 @@ export default function Calendar() {
           email: "",
           codigo: "",
           date: new Date(),
-        }
+        };
       }
-    })
-  }, [eventsData])
+    });
+  }, [eventsData]);
 
-  // Filtrar eventos según la búsqueda
+
   const filteredEvents = useMemo(() => {
     if (!searchQuery.trim()) return events
 
@@ -263,23 +255,6 @@ export default function Calendar() {
     return () => clearTimeout(popupTimer)
   }, [])
 
-  useEffect(() => {
-    if (showAIPopup) {
-      const text =
-        "Parece que no tienes muchas reuniones hoy. ¿Quieres que reproduzca algo de música de Hans Zimmer para ayudarte a concentrarte?"
-      let i = 0
-      const typingInterval = setInterval(() => {
-        if (i < text.length) {
-          setTypedText((prev) => prev + text.charAt(i))
-          i++
-        } else {
-          clearInterval(typingInterval)
-        }
-      }, 50)
-
-      return () => clearInterval(typingInterval)
-    }
-  }, [showAIPopup])
 
   // Funciones de navegación
   const goToToday = () => {
@@ -339,18 +314,8 @@ export default function Calendar() {
     }
   }
 
-  // Sample my calendars
-  const myCalendars = [
-    { name: "Mi Calendario", color: "bg-blue-500" },
-    { name: "Trabajo", color: "bg-green-500" },
-  ]
 
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying)
-    // Here you would typically also control the actual audio playback
-  }
 
-  // Formatear el título de la vista actual
   const viewTitle = useMemo(() => {
     if (currentView === "day") {
       return format(selectedDate, "d 'de' MMMM yyyy", { locale: es })
@@ -363,191 +328,62 @@ export default function Calendar() {
     }
   }, [selectedDate, currentView])
 
-  // Formatear el título del mes para el mini calendario
+
   const miniCalendarTitle = useMemo(() => {
     return format(selectedDate, "MMMM yyyy", { locale: es })
   }, [selectedDate])
 
-  // Función para abrir el formulario de evento
   const openEventForm = () => {
     setShowEventForm(true)
   }
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
-      {/* Background Image */}
       <img
         src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format&fit=crop"
         alt="Beautiful mountain landscape"
         className="absolute inset-0 object-cover w-full h-full"
       />
+    <h1 className="absolute left-5 top-5 text-4xl font-bold text-white">MEC Eventos</h1>
+    <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
-      {/* Navigation */}
-      <header
-        className={`absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-8 py-6 opacity-0 ${isLoaded ? "animate-fade-in" : ""}`}
-        style={{ animationDelay: "0.2s" }}
-      >
-        <div className="flex items-center gap-4">
-          <Menu className="h-6 w-6 text-white" />
-          <span className="text-2xl font-semibold text-white drop-shadow-lg">Calendario</span>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/70" />
-            <input
-              type="text"
-              placeholder="Buscar por email, lugar, organizador o código"
-              className="rounded-full bg-white/10 backdrop-blur-sm pl-10 pr-4 py-2 text-white placeholder:text-white/70 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 w-80"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <Settings className="h-6 w-6 text-white drop-shadow-md" />
-          <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold shadow-md">
-            U
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
       <main className="relative h-screen w-full pt-20 flex">
-        {/* Sidebar */}
-        <div
-          className={`w-64 h-full bg-white/10 backdrop-blur-lg p-4 shadow-xl border-r border-white/20 rounded-tr-3xl opacity-0 ${isLoaded ? "animate-fade-in" : ""} flex flex-col justify-between`}
-          style={{ animationDelay: "0.4s" }}
-        >
-          <div>
-            <button
-              className="mb-6 flex items-center justify-center gap-2 rounded-full bg-blue-500 px-4 py-3 text-white w-full"
-              onClick={openEventForm}
-            >
-              <Plus className="h-5 w-5" />
-              <span>Crear</span>
-            </button>
+      <Sidebar
+          miniCalendarTitle={miniCalendarTitle}
+          monthDays={monthDays}
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          openEventForm={openEventForm}
+        />
 
-            {/* Mini Calendar */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-white font-medium capitalize">{miniCalendarTitle}</h3>
-                <div className="flex gap-1">
-                  <button
-                    className="p-1 rounded-full hover:bg-white/20"
-                    onClick={() => setSelectedDate((prev) => subMonths(prev, 1))}
-                  >
-                    <ChevronLeft className="h-4 w-4 text-white" />
-                  </button>
-                  <button
-                    className="p-1 rounded-full hover:bg-white/20"
-                    onClick={() => setSelectedDate((prev) => addMonths(prev, 1))}
-                  >
-                    <ChevronRight className="h-4 w-4 text-white" />
-                  </button>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-7 gap-1 text-center">
-                {["D", "L", "M", "X", "J", "V", "S"].map((day, i) => (
-                  <div key={i} className="text-xs text-white/70 font-medium py-1">
-                    {day}
-                  </div>
-                ))}
-
-                {monthDays.map((day, i) => (
-                  <div
-                    key={i}
-                    className={`text-xs rounded-full w-7 h-7 flex items-center justify-center cursor-pointer
-                      ${isToday(day) ? "bg-blue-500 text-white" : ""}
-                      ${isSameDay(day, selectedDate) && !isToday(day) ? "bg-white/20 text-white" : ""}
-                      ${!isSameMonth(day, selectedDate) ? "text-white/40" : "text-white"}
-                      hover:bg-white/20
-                    `}
-                    onClick={() => selectDay(day)}
-                  >
-                    {format(day, "d")}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* My Calendars */}
-            <div>
-              <h3 className="text-white font-medium mb-3">Mis calendarios</h3>
-              <div className="space-y-2">
-                {myCalendars.map((cal, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-sm ${cal.color}`}></div>
-                    <span className="text-white text-sm">{cal.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* New position for the big plus button */}
-          <button
-            className="mt-6 flex items-center justify-center gap-2 rounded-full bg-blue-500 p-4 text-white w-14 h-14 self-start"
-            onClick={openEventForm}
-          >
-            <Plus className="h-6 w-6" />
-          </button>
-        </div>
-
-        {/* Calendar View */}
         <div
           className={`flex-1 flex flex-col opacity-0 ${isLoaded ? "animate-fade-in" : ""}`}
           style={{ animationDelay: "0.6s" }}
         >
-          {/* Calendar Controls */}
-          <div className="flex items-center justify-between p-4 border-b border-white/20">
-            <div className="flex items-center gap-4">
-              <button className="px-4 py-2 text-white bg-blue-500 rounded-md" onClick={goToToday}>
-                Hoy
-              </button>
-              <div className="flex">
-                <button className="p-2 text-white hover:bg-white/10 rounded-l-md" onClick={goToPrevious}>
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button className="p-2 text-white hover:bg-white/10 rounded-r-md" onClick={goToNext}>
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </div>
-              <h2 className="text-xl font-semibold text-white capitalize">{viewTitle}</h2>
-            </div>
 
-            <div className="flex items-center gap-2 rounded-md p-1">
-              <button
-                onClick={() => setCurrentView("day")}
-                className={`px-3 py-1 rounded ${currentView === "day" ? "bg-white/20" : ""} text-white text-sm`}
-              >
-                Día
-              </button>
-              <button
-                onClick={() => setCurrentView("week")}
-                className={`px-3 py-1 rounded ${currentView === "week" ? "bg-white/20" : ""} text-white text-sm`}
-              >
-                Semana
-              </button>
-              <button
-                onClick={() => setCurrentView("month")}
-                className={`px-3 py-1 rounded ${currentView === "month" ? "bg-white/20" : ""} text-white text-sm`}
-              >
-                Mes
-              </button>
-            </div>
-          </div>
+          <div className=" flex flex-col">
+          <CalendarControls
+            goToToday={goToToday}
+            goToPrevious={goToPrevious}
+            goToNext={goToNext}
+            currentView={currentView}
+            setCurrentView={setCurrentView}
+            viewTitle={viewTitle}
+          />
+ 
+        </div>
 
-          {/* Calendar Content */}
+   
           <div className="flex-1 overflow-auto p-4">
             <div className="bg-white/20 backdrop-blur-lg rounded-xl border border-white/20 shadow-xl h-full">
-              {/* Loading state */}
+
               {isLoading && (
                 <div className="flex items-center justify-center h-full">
                   <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
                 </div>
               )}
 
-              {/* Day View */}
               {!isLoading && currentView === "day" && (
                 <div className="flex flex-col h-full">
                   <div className="p-4 border-b border-white/20 text-center">
@@ -566,7 +402,6 @@ export default function Calendar() {
                         </div>
                       ))}
 
-                      {/* Events */}
                       {visibleEvents.map((event:any, i: number) => {
                         const eventStyle = calculateEventStyle(event.startTime, event.endTime)
                         return (
@@ -714,53 +549,6 @@ export default function Calendar() {
           </div>
         </div>
 
-        {showAIPopup && (
-          <div className="fixed bottom-8 right-8 z-20">
-            <div className="w-[450px] relative bg-gradient-to-br from-blue-400/30 via-blue-500/30 to-blue-600/30 backdrop-blur-lg p-6 rounded-2xl shadow-xl border border-blue-300/30 text-white">
-              <button
-                onClick={() => setShowAIPopup(false)}
-                className="absolute top-2 right-2 text-white/70 hover:text-white transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-              <div className="flex gap-3">
-                <div className="flex-shrink-0">
-                  <Sparkles className="h-5 w-5 text-blue-300" />
-                </div>
-                <div className="min-h-[80px]">
-                  <p className="text-base font-light">{typedText}</p>
-                </div>
-              </div>
-              <div className="mt-6 flex gap-3">
-                <button
-                  onClick={togglePlay}
-                  className="flex-1 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-sm transition-colors font-medium"
-                >
-                  Sí
-                </button>
-                <button
-                  onClick={() => setShowAIPopup(false)}
-                  className="flex-1 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-sm transition-colors font-medium"
-                >
-                  No
-                </button>
-              </div>
-              {isPlaying && (
-                <div className="mt-4 flex items-center justify-between">
-                  <button
-                    className="flex items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-white text-sm hover:bg-white/20 transition-colors"
-                    onClick={togglePlay}
-                  >
-                    <Pause className="h-4 w-4" />
-                    <span>Pausar Hans Zimmer</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Event Details Modal */}
         {selectedEvent && (
           <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
             <div
@@ -813,7 +601,6 @@ export default function Calendar() {
           </div>
         )}
 
-        {/* Formulario de Evento */}
         <EventForm isOpen={showEventForm} onClose={() => setShowEventForm(false)} initialDate={selectedDate} />
       </main>
     </div>

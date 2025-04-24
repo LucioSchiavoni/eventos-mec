@@ -19,12 +19,14 @@ model Evento {
   id         Int      @id @default(autoincrement())
   email   String   
   fecha     DateTime 
-  hora      String
+  hora_ini      String
+  hora_fin      String
   lugar    String
   soporte Boolean @default(false)
   organizador String
-  descripcion String
+  descripcion String?
   codigo String
+  telefono String?
   created_at  DateTime @default(now())
 }
 
