@@ -48,9 +48,11 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
     mutationFn: async (eventData: EventFormData) => {
       await createEvento(eventData);
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
       onClose();
+      console.log(data.success)
+      alert(data.success)
       setFormData({
         email: "",
         fecha: format(new Date(), "yyyy-MM-dd"),
@@ -64,6 +66,9 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
         codigo: "",
       });
     },
+    onError: (error: any) => {
+      alert(error.message) 
+    }
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {

@@ -2,8 +2,6 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { format, subMonths, addMonths, isToday, isSameDay, isSameMonth } from "date-fns";
 
 
-
-
 export default function Sidebar({
   miniCalendarTitle,
   monthDays,
@@ -18,20 +16,18 @@ export default function Sidebar({
   openEventForm: () => void;
 }) {
 
-
     
   return (
     <div className="w-64 h-full bg-white/10 backdrop-blur-lg p-4 shadow-xl border-r border-white/20 rounded-tr-3xl flex flex-col justify-between">
       <div>
         <button
           className="mb-6 flex items-center justify-center gap-2 rounded-full bg-blue-500 px-4 py-3 text-white w-full"
-          onClick={openEventForm}
-        >
+          onClick={openEventForm}>
           <Plus className="h-5 w-5" />
-          <span>Crear</span>
+          <span>Crear Evento</span>
         </button>
 
-        {/* Mini Calendar */}
+
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-white font-medium capitalize">{miniCalendarTitle}</h3>

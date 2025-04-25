@@ -17,7 +17,7 @@ export const createEvento = async (evento: any) => {
     try {
         const res = await clienteAxios.post("/evento", evento);
         return res.data;
-    } catch (error) {
-        console.log(error);
+    } catch (error: any) {
+        throw error.response?.data || new Error("Error al crear el evento");
     }
 }

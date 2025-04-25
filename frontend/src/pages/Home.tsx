@@ -218,36 +218,32 @@ export default function Calendar() {
     }
   }, [filteredEvents, currentView, selectedDate])
 
-  // Calcular los días de la semana actual
+
   const weekDays = useMemo(() => {
     const start = startOfWeek(selectedDate, { weekStartsOn: 0 })
     return Array.from({ length: 7 }, (_, i) => addDays(start, i))
   }, [selectedDate])
 
-  // Calcular los días del mes para el mini calendario
   const monthDays = useMemo(() => {
     const firstDay = startOfMonth(selectedDate)
     const lastDay = endOfMonth(selectedDate)
     const days = eachDayOfInterval({ start: firstDay, end: lastDay })
 
-    // Añadir días del mes anterior para completar la primera semana
     const firstDayOfWeek = getDay(firstDay)
     const prevMonthDays = Array.from({ length: firstDayOfWeek }, (_, i) => subDays(firstDay, firstDayOfWeek - i))
 
-    // Añadir días del mes siguiente para completar la última semana
     const lastDayOfWeek = getDay(lastDay)
     const nextMonthDays = Array.from({ length: 6 - lastDayOfWeek }, (_, i) => addDays(lastDay, i + 1))
 
     return [...prevMonthDays, ...days, ...nextMonthDays]
   }, [selectedDate])
 
-  // Franjas horarias para la vista de día y semana
+
   const timeSlots = Array.from({ length: 13 }, (_, i) => i + 8) // 8 AM a 8 PM
 
   useEffect(() => {
     setIsLoaded(true)
 
-    // Show AI popup after 3 seconds
     const popupTimer = setTimeout(() => {
       setShowAIPopup(true)
     }, 3000)
@@ -256,7 +252,6 @@ export default function Calendar() {
   }, [])
 
 
-  // Funciones de navegación
   const goToToday = () => {
     setSelectedDate(new Date())
     setCurrentDate(new Date())
@@ -290,19 +285,16 @@ export default function Calendar() {
     setSelectedEvent(event)
   }
 
-  // Helper function to calculate event position and height
   const calculateEventStyle = (startTime: string, endTime: string) => {
     try {
       const [startHours, startMinutes] = startTime.split(":").map(Number)
       const [endHours, endMinutes] = endTime.split(":").map(Number)
 
-      // Verificar que los valores sean números válidos
       const start = (isNaN(startHours) ? 8 : startHours) + (isNaN(startMinutes) ? 0 : startMinutes) / 60
       const end = (isNaN(endHours) ? 9 : endHours) + (isNaN(endMinutes) ? 0 : endMinutes) / 60
 
-      // Asegurarse de que start sea menor que end y esté dentro del rango visible
-      const safeStart = Math.max(8, Math.min(start, 20)) // Entre 8 AM y 8 PM
-      const safeEnd = Math.max(safeStart + 0.5, Math.min(end, 21)) // Al menos 30 min después de start
+      const safeStart = Math.max(8, Math.min(start, 20)) 
+      const safeEnd = Math.max(safeStart + 0.5, Math.min(end, 21)) 
 
       const top = (safeStart - 8) * 80 // 80px por hora
       const height = (safeEnd - safeStart) * 80
@@ -583,7 +575,7 @@ export default function Calendar() {
                   <strong>Email:</strong> {selectedEvent.email}
                 </p>
                 <p>
-                  <strong>Código:</strong> {selectedEvent.codigo}
+                  <strong>Código:</strong> <span className="capitalize">{selectedEvent.codigo}</span>
                 </p>
                 <p>
                   <strong>Descripción:</strong> {selectedEvent.description}
