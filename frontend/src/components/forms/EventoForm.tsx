@@ -5,6 +5,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { format, parseISO } from "date-fns"
 import { X, CalendarIcon, Clock } from "lucide-react"
 import { createEvento } from "../../api/eventos"
+import { toast } from "react-toastify"
+import { Providers } from "../../providers/providers"
+import UIAlert from "../utils/UiAlert"
 
 interface EventFormProps {
   isOpen: boolean
@@ -42,17 +45,28 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [showTimePicker, setShowTimePicker] = useState<"hora_ini" | "hora_fin" | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({})
-
+  const [uialert, setUiAlert] = useState<{ message: string; active: boolean }>({
+    message: "",
+    active: false,
+  });
 
   const createEventMutation = useMutation({
     mutationFn: async (eventData: EventFormData) => {
-      await createEvento(eventData);
+      const response = await createEvento(eventData);
+      return response
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
-      onClose();
-      console.log(data.success)
-      alert(data.success)
+      
+      if (data.success) {
+        toast.success(data.message);
+        onClose(); 
+      }else{
+        setUiAlert({message: data.message, active:true})
+        setTimeout(() => {
+          setUiAlert({ message: "", active: false });
+        }, 60000);
+      }
       setFormData({
         email: "",
         fecha: format(new Date(), "yyyy-MM-dd"),
@@ -65,9 +79,12 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
         descripcion: "",
         codigo: "",
       });
-    },
+   },
     onError: (error: any) => {
-      alert(error.message) 
+      toast.error(error.message || "Error inesperado");
+      setTimeout(() => {
+        setUiAlert({ message: "", active: false });
+      }, 6000);
     }
   });
 
@@ -110,10 +127,10 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
     return Object.keys(newErrors).length === 0
   }
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async(e: React.FormEvent) => {
     e.preventDefault();
-  
-    if (validateForm()) {
+    try {
+       if (validateForm()) {
       const dateTimeStart = `${formData.fecha}T${formData.hora_ini}:00`;
 
   
@@ -123,17 +140,26 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
         hora_fin: formData.hora_fin,
         hora_ini: formData.hora_ini,
       };
-      console.log(eventData)
       createEventMutation.mutate(eventData);
     }
+    } catch (error) {
+      console.log(error);
+    }finally{
+      setUiAlert({message: "", active:false})
+    }
+   
   };
 
-  // Generar días para el selector de fecha
+  const closeAlert = () => {
+    setUiAlert((prev) => ({ ...prev, active: false }))
+  }
+
+
   const generateCalendarDays = () => {
     const today = new Date()
     const days = []
 
-    // Generar días para los próximos 2 meses
+
     for (let i = 0; i < 60; i++) {
       const date = new Date(today)
       date.setDate(today.getDate() + i)
@@ -145,11 +171,11 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
 
   const calendarDays = generateCalendarDays()
 
-  // Generar horas para el selector de hora
+
   const generateTimeOptions = () => {
     const times = []
 
-    for (let hour = 8; hour <= 20; hour++) {
+    for (let hour = 8; hour <= 23; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
         const formattedHour = hour.toString().padStart(2, "0")
         const formattedMinute = minute.toString().padStart(2, "0")
@@ -165,6 +191,7 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
   if (!isOpen) return null
 
   return (
+    <Providers>
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/30 shadow-xl max-w-2xl w-full mx-auto text-white overflow-hidden">
         <div className="flex items-center justify-between p-6 border-b border-white/20">
@@ -173,7 +200,11 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
             <X className="h-5 w-5" />
           </button>
         </div>
-
+        {
+  uialert.active && (
+   <UIAlert active={uialert.active} message={uialert.message} onClose={closeAlert} />
+  )
+}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Email */}
@@ -464,6 +495,7 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
         </form>
       </div>
     </div>
+    </Providers>
   )
 }
 

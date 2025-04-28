@@ -32,18 +32,6 @@ import CalendarControls from "../components/utils/CalendarControls"
 import Sidebar from "../components/utils/Sidebar"
 import Header from "../components/utils/Headers"
 
-// interface EventData {
-//   id: number
-//   email: string
-//   fecha: string
-//   hora: string
-//   lugar: string
-//   soporte: boolean
-//   organizador: string
-//   descripcion: string
-//   codigo: string
-//   created_at: string
-// }
 
 interface CalendarEvent {
   id: number
@@ -61,7 +49,7 @@ interface CalendarEvent {
   date: Date
 }
 
-// Colores para los eventos
+
 const eventColors = [
   "bg-blue-500",
   "bg-green-500",
@@ -83,13 +71,13 @@ export default function Calendar() {
   const [searchQuery, setSearchQuery] = useState("")
   const [showEventForm, setShowEventForm] = useState(false)
 
-  // Estado para la navegación del calendario
+
   const [_, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [currentView, setCurrentView] = useState<"day" | "week" | "month">("week")
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
 
-  // Consulta para obtener los eventos del backend
+
   const { data: eventsData, isLoading } = useQuery({
     queryKey: ["events"],
     queryFn: getEventos,
@@ -200,7 +188,7 @@ export default function Calendar() {
     )
   }, [events, searchQuery])
 
-  // Calcular los eventos visibles según la vista actual y la fecha seleccionada
+
   const visibleEvents = useMemo(() => {
     if (currentView === "day") {
       return filteredEvents.filter((event: any) => isSameDay(event.date, selectedDate))
@@ -210,7 +198,6 @@ export default function Calendar() {
 
       return filteredEvents.filter((event:any) => event.date >= start && event.date <= end)
     } else {
-      // month view
       const start = startOfMonth(selectedDate)
       const end = endOfMonth(selectedDate)
 
@@ -293,16 +280,16 @@ export default function Calendar() {
       const start = (isNaN(startHours) ? 8 : startHours) + (isNaN(startMinutes) ? 0 : startMinutes) / 60
       const end = (isNaN(endHours) ? 9 : endHours) + (isNaN(endMinutes) ? 0 : endMinutes) / 60
 
-      const safeStart = Math.max(8, Math.min(start, 20)) 
+      const safeStart = Math.max(8, Math.min(start, 40)) 
       const safeEnd = Math.max(safeStart + 0.5, Math.min(end, 21)) 
 
-      const top = (safeStart - 8) * 80 // 80px por hora
+      const top = (safeStart - 8) * 80 
       const height = (safeEnd - safeStart) * 80
 
       return { top: `${top}px`, height: `${height}px` }
     } catch (error) {
       console.error("Error al calcular estilo del evento:", error)
-      return { top: "0px", height: "80px" } // Valores predeterminados
+      return { top: "0px", height: "80px" } 
     }
   }
 
@@ -330,6 +317,7 @@ export default function Calendar() {
   }
 
   return (
+
     <div className="relative min-h-screen w-full overflow-hidden">
       <img
         src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format&fit=crop"
@@ -436,9 +424,9 @@ export default function Calendar() {
                     ))}
                   </div>
 
-                  {/* Time Grid */}
+            
                   <div className="grid grid-cols-8">
-                    {/* Time Labels */}
+
                     <div className="text-white/70">
                       {timeSlots.map((time, i) => (
                         <div key={i} className="h-20 border-b border-white/10 pr-2 text-right text-xs">
@@ -447,14 +435,14 @@ export default function Calendar() {
                       ))}
                     </div>
 
-                    {/* Days Columns */}
+
                     {weekDays.map((day, dayIndex) => (
                       <div key={dayIndex} className="border-l border-white/20 relative">
                         {timeSlots.map((_, timeIndex) => (
                           <div key={timeIndex} className="h-20 border-b border-white/10"></div>
                         ))}
 
-                        {/* Events */}
+                  
                         {visibleEvents
                           .filter((event: any) => isSameDay(event.date, day))
                           .map((event: any, i:number) => {

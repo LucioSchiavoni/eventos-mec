@@ -1,24 +1,26 @@
-import { createEventoRepositories, eliminarEventoRepositories, getEventosByIdRepositories, getEventosRepositories, modificarEventoRepositories } from "../repositories/eventos.repositories.js";
-
+import { sendEmailService } from "../middlewares/sendEmail.js";
+import { createEventoRepositories, eliminarEventoRepositories, findEventoByHoraYLugarRepositories, getEventosByIdRepositories, getEventosRepositories, modificarEventoRepositories } from "../repositories/eventos.repositories.js";
 
 
 export const createEventoService = async (data) => {
     try {
 
-        const existEvento = await getEventosByIdRepositories(data.hora_ini, data.hora_fin);
+        const existEvento = await findEventoByHoraYLugarRepositories(data.hora_ini, data.hora_fin, data.lugar);
         if(existEvento) {
-            return {error: "Ya existe un evento en ese rango de horas", error: true};
+            return {message: "Ya existe un evento en ese rango de horas", success: false};
         }
         const codigo = Math.random().toString(36).substring(2, 10);
         const newEvento = await createEventoRepositories({
             ... data,
             codigo: codigo
         });
-        return {success: "Evento creado con exito", success: true, evento: newEvento};
+        await sendEmailService(data.email, data.lugar, data.hora_ini, data.fecha, codigo);
+        return {message: "Evento creado con exito", success: true};
     } catch (error) {
         throw error;
     }
 }
+
 
 
 export const getEventosService = async () => {

@@ -11,27 +11,48 @@ export const getEventosRepositories = async () => {
     }
 }
 
-export const findEventoByHoraRepositories = async (hora_ini, hora_fin) => {
+export const findEventoByHoraYLugarRepositories = async (hora_ini, hora_fin, lugar) => {
     try {
         const evento = await prisma.evento.findMany({
             where: {
-                OR: [
+                AND: [
                     {
-                        hora_ini: {
-                            gte: hora_ini,
-                            lte: hora_fin
-                        }
+                        lugar: lugar,
                     },
                     {
-                        hora_fin: {
-                            gte: hora_ini,
-                            lte: hora_fin
-                        }
-                    }
-                ]
-            }
+                        OR: [
+                            {
+                                AND: [
+                                    { hora_ini: { lte: hora_fin } }, // El inicio del evento está antes o en el rango
+                                    { hora_fin: { gte: hora_ini } }, // El fin del evento está después o en el rango
+                                ],
+                            },
+                            {
+                                AND: [
+                                    { hora_ini: { lte: hora_ini } }, // El evento abarca completamente el rango
+                                    { hora_fin: { gte: hora_fin } },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         });
-        return evento.length > 0;
+        return evento.length > 0; // Devuelve true si hay eventos superpuestos
+    } catch (error) {
+        throw error;
+    }
+};
+
+
+export const findEventoByLugarRepositories = async (lugar) => {
+    try {
+        const evento = await prisma.evento.findMany({
+            where: {
+                lugar: lugar
+            }
+        })
+        return evento;
     } catch (error) {
         throw error;
     }
