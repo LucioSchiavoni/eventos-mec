@@ -4,7 +4,6 @@ import { createEventoRepositories, eliminarEventoRepositories, findEventoByHoraY
 
 export const createEventoService = async (data) => {
     try {
-
         const existEvento = await findEventoByHoraYLugarRepositories(data.hora_ini, data.hora_fin, data.lugar);
         if(existEvento) {
             return {message: "Ya existe un evento en ese rango de horas", success: false};
@@ -14,7 +13,7 @@ export const createEventoService = async (data) => {
             ... data,
             codigo: codigo
         });
-        await sendEmailService(data.email, data.lugar, data.hora_ini, data.fecha, codigo);
+        await sendEmailService(data.email, data.lugar, data.hora_ini, data.hora_fin , data.fecha, codigo);
         return {message: "Evento creado con exito", success: true};
     } catch (error) {
         throw error;

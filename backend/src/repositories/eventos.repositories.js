@@ -23,13 +23,13 @@ export const findEventoByHoraYLugarRepositories = async (hora_ini, hora_fin, lug
                         OR: [
                             {
                                 AND: [
-                                    { hora_ini: { lte: hora_fin } }, // El inicio del evento está antes o en el rango
-                                    { hora_fin: { gte: hora_ini } }, // El fin del evento está después o en el rango
+                                    { hora_ini: { lt: hora_fin } }, 
+                                    { hora_fin: { gt: hora_ini } }, 
                                 ],
                             },
                             {
                                 AND: [
-                                    { hora_ini: { lte: hora_ini } }, // El evento abarca completamente el rango
+                                    { hora_ini: { lte: hora_ini } }, 
                                     { hora_fin: { gte: hora_fin } },
                                 ],
                             },
@@ -38,7 +38,7 @@ export const findEventoByHoraYLugarRepositories = async (hora_ini, hora_fin, lug
                 ],
             },
         });
-        return evento.length > 0; // Devuelve true si hay eventos superpuestos
+        return evento.length > 0; 
     } catch (error) {
         throw error;
     }

@@ -3,9 +3,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 
+
 const transporter = nodemailer.createTransport({
     host: process.env.HOST,
-    port : process.env.PORT,
+    port : process.env.PORT_EMAIL,
     secure: false, 
     auth: {
         user: process.env.USER, 
@@ -16,17 +17,27 @@ const transporter = nodemailer.createTransport({
 
 
 
-export const sendEmailService = async (email, lugar, hora_ini, codigo) => {
+export const sendEmailService = async (email, lugar, hora_ini, hora_fin, fecha, codigo) => {
     try {
 
-        const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Confirmación de Reserva</title>
-  <style>
+      const fechaOriginal = fecha; 
+      const fechaObj = new Date(fechaOriginal);
+      const diasSemana = [
+            "Domingo", "Lunes", "Martes", "Miércoles", 
+            "Jueves", "Viernes", "Sábado"
+        ];
+      const diaSemana = diasSemana[fechaObj.getDay()];
+      const diaMes = fechaObj.getDate();
+      const fechaFormateada = `${diaSemana} ${diaMes}`;
+
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmación de Reserva</title>
+    <style>
     body {
       font-family: Arial, sans-serif;
       line-height: 1.6;
@@ -67,11 +78,13 @@ export const sendEmailService = async (email, lugar, hora_ini, codigo) => {
       letter-spacing: 1px;
       border: 1px dashed #ccc;
       display: inline-block;
+      text-transform: uppercase;
+      font-weight: bold;
     }
-  </style>
-</head>
-<body>
-  <div class="container">
+    </style>
+    </head>
+    <body>
+    <div class="container">
     <div class="header">
       <h1 style="margin: 0; font-size: 24px;">Confirmación de Reserva</h1>
     </div>
@@ -80,29 +93,28 @@ export const sendEmailService = async (email, lugar, hora_ini, codigo) => {
     
     <p>Le confirmamos que se ha realizado correctamente su reserva:</p>
     
-    <p>Se reservó <span class="highlight">${lugar}</span> a las <span class="highlight">${hora_ini}</span>.</p>
+    <p>Se reservó <span class="highlight">${lugar}</span> para el <span class="highlight">${fechaFormateada}</span> desde las <span class="highlight">${hora_ini}</span> hasta las <span class="highlight">${hora_fin}</span>.</p>
     
-    <p>Su código de reserva es: <div class="code">${codigo}</div></p>
+    <p>Su código de reserva es: <div class="code">${codigo.toUpperCase()}</div></p>
     
     <p>Por favor, conserve este código para futuras referencias. Lo necesitará para cualquier modificación o cancelación de su reserva.</p>
-    
-    <p>Gracias por su preferencia.</p>
-    
+     
     <p>Saludos cordiales,<br>
-    El Equipo de Reservas</p>
+    El Equipo de Sistemas</p>
     
     <div class="footer">
       Este es un correo automático, por favor no responda a este mensaje.
     </div>
-  </div>
-</body>
-</html>
-`
+    </div>
+    </body>
+    </html>
+    `
+
 
 
         const mailOptions = {
             from: process.env.USER,
-            to: process.env.EMAIL_TO, 
+            to: process.env.EMAIL_TO, email,
             subject: 'Confirmación de Reserva',
             html: htmlContent,
         };

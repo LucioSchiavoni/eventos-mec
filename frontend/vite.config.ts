@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@heroui-theme': path.resolve(__dirname, '/node_modules/@heroui/theme/dist')
     },
   },
 })

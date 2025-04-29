@@ -6,8 +6,9 @@ import { format, parseISO } from "date-fns"
 import { X, CalendarIcon, Clock } from "lucide-react"
 import { createEvento } from "../../api/eventos"
 import { toast } from "react-toastify"
-import { Providers } from "../../providers/providers"
 import UIAlert from "../utils/UiAlert"
+import {Select, SelectItem} from "@heroui/select";
+
 
 interface EventFormProps {
   isOpen: boolean
@@ -191,7 +192,8 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
   if (!isOpen) return null
 
   return (
-    <Providers>
+   
+
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/30 shadow-xl max-w-2xl w-full mx-auto text-white overflow-hidden">
         <div className="flex items-center justify-between p-6 border-b border-white/20">
@@ -381,23 +383,16 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
   )}
 </div>
 
-            {/* Lugar */}
-            <div className="space-y-2">
-              <label htmlFor="lugar" className="block text-sm font-medium">
-                Lugar
-              </label>
-              <input
-                type="text"
-                id="lugar"
-                name="lugar"
-                value={formData.lugar}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 bg-white/10 border ${errors.lugar ? "border-red-500" : "border-white/20"} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                placeholder="Ubicación del evento"
-              />
-              {errors.lugar && <p className="text-red-700 font-semibold">{errors.lugar}</p>}
-            </div>
-
+          <div className="flex w-full flex-wrap md:flex-nowrap gap-4">
+            <Select className="max-w-xs" label="Selecciona la sala">
+              <SelectItem>
+               Sala Alba Roballo (Piso 9)
+              </SelectItem>
+              <SelectItem>
+                Planta Baja (Piso 1)
+              </SelectItem>
+            </Select>
+          </div>
 
             {/* Teléfono */}
             <div className="space-y-2">
@@ -495,7 +490,6 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
         </form>
       </div>
     </div>
-    </Providers>
   )
 }
 
