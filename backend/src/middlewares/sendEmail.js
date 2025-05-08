@@ -114,7 +114,8 @@ export const sendEmailService = async (email, lugar, hora_ini, hora_fin, fecha, 
 
         const mailOptions = {
             from: process.env.USER,
-            to: process.env.EMAIL_TO, email,
+            to: email,
+            cc: process.env.EMAIL_CC,
             subject: 'Confirmación de Reserva',
             html: htmlContent,
         };

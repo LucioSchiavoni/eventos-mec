@@ -7,7 +7,6 @@ import { X, CalendarIcon, Clock } from "lucide-react"
 import { createEvento } from "../../api/eventos"
 import { toast } from "react-toastify"
 import UIAlert from "../utils/UiAlert"
-import {Select, SelectItem} from "@heroui/select";
 
 
 interface EventFormProps {
@@ -129,11 +128,11 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
   }
   
   const handleSubmit = async(e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); 
+
     try {
        if (validateForm()) {
       const dateTimeStart = `${formData.fecha}T${formData.hora_ini}:00`;
-
   
       const eventData = {
         ...formData,
@@ -141,6 +140,8 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
         hora_fin: formData.hora_fin,
         hora_ini: formData.hora_ini,
       };
+
+    
       createEventMutation.mutate(eventData);
     }
     } catch (error) {
@@ -382,16 +383,23 @@ export default function EventForm({ isOpen, onClose, initialDate = new Date() }:
     </div>
   )}
 </div>
-
-          <div className="flex w-full flex-wrap md:flex-nowrap gap-4">
-            <Select className="max-w-xs" label="Selecciona la sala">
-              <SelectItem>
-               Sala Alba Roballo (Piso 9)
-              </SelectItem>
-              <SelectItem>
-                Planta Baja (Piso 1)
-              </SelectItem>
-            </Select>
+            <div className="space-y-2">
+            <label htmlFor="lugar" className="block text-sm font-medium">
+              Lugar
+            </label>
+            <select
+              id="lugar"
+              name="lugar"
+              value={formData.lugar}
+              onChange={handleChange}
+              className={`w-full px-3 py-2 
+               border ${errors.lugar ? "border-red-500" : "border-white/20"} focus:text-black rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            >
+              <option value="" disabled>Seleccionar lugar</option>
+              <option value="Sala Alba Roballo (Piso 9)">Sala Alba Roballo (Piso 9)</option>
+              <option value="Planta Baja (Piso 1)">Planta Baja</option>
+            </select>
+            {errors.lugar && <p className="text-red-700 font-semibold">{errors.lugar}</p>}
           </div>
 
             {/* Teléfono */}
